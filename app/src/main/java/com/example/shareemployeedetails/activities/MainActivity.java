@@ -2,6 +2,7 @@ package com.example.shareemployeedetails.activities;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -13,6 +14,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.StrictMode;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
@@ -20,6 +22,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.ajts.androidmads.library.SQLiteToExcel;
+import com.example.shareemployeedetails.BuildConfig;
 import com.example.shareemployeedetails.R;
 import com.example.shareemployeedetails.adapter.EmployeeAdapter;
 import com.example.shareemployeedetails.db_helper.DB_EmployeeDetails;
@@ -28,6 +31,7 @@ import com.example.shareemployeedetails.utility.Constants;
 import com.google.android.material.button.MaterialButton;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 
 import butterknife.BindView;
@@ -125,18 +129,39 @@ public class MainActivity extends AppCompatActivity {
             File root = Environment.getExternalStorageDirectory();
             String filelocation = root.getAbsolutePath() + "/Backup" + "/" + "Emp_Details.xls";
 
-            Intent intent = new Intent(Intent.ACTION_SENDTO);
-            intent.setType("text/plain");
-            String message = "File to be shared is " + "Emp_Details.xls" + ".";
-            intent.putExtra(Intent.EXTRA_SUBJECT, "Subject");
-            intent.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + filelocation));
-            intent.putExtra(Intent.EXTRA_TEXT, message);
-            intent.setData(Uri.parse("mailto:twishakotecha21@gmail.com"));
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            File filePath = new File(filelocation);
 
-            startActivity(intent);
+            if(!filePath.exists()){
+                filePath.createNewFile();
+            }
+
+            FileOutputStream fileOutputStream = new FileOutputStream(filePath);
+
+            fileOutputStream.flush();
+            fileOutputStream.close();
+
+            Intent emailIntent = new Intent(Intent.ACTION_SEND);
+            Uri uri = FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID+".provider", filePath);
+            emailIntent.setType("application/excel");
+            emailIntent.putExtra(Intent.EXTRA_STREAM, uri);
+            emailIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.Email_Subject_Line));
+            emailIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            emailIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            this.startActivity(emailIntent);
+
+//            Intent intent = new Intent(Intent.ACTION_SENDTO);
+//            intent.setType("text/plain");
+//            String message = "File to be shared is " + "Emp_Details.xls" + ".";
+//            intent.putExtra(Intent.EXTRA_SUBJECT, "Subject");
+//            intent.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + filelocation));
+//            intent.putExtra(Intent.EXTRA_TEXT, message);
+//            intent.setData(Uri.parse("mailto:twishakotecha21@gmail.com"));
+//            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//
+//            startActivity(intent);
         } catch (Exception e) {
             System.out.println("is exception raises during sending mail" + e);
+            Log.e("macro","m->"+e.getMessage());
         }
     }
 
